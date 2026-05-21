@@ -1,0 +1,20 @@
+# Build and temporary files
+bin/
+obj/
+release-stage/
+*.user
+*.suo
+*.pdb
+
+# Runtime files downloaded on user machines
+ffmpeg/
+
+# Generated executable. It is kept inside the release zip instead.
+dist/YBBvideozip.exe
+
+# Local editor files
+.vs/
+.vscode/
+
+# Keep release zip intentionally.
+!dist/YBBvideozip-green.zip
