@@ -50,3 +50,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\package-app.ps1
 本软件调用 FFmpeg 命令行程序。FFmpeg 组件首次运行时自动下载并校验 SHA256。
 
 第三方组件说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+## 许可证
+
+GPL-3.0，见 [LICENSE](LICENSE)。
