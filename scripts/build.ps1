@@ -8,6 +8,7 @@ $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $src = Join-Path $root "src\VideoCompressorUI.cs"
 $dist = Join-Path $root "dist"
 $exe = Join-Path $dist "YBBvideozip.exe"
+$icon = Join-Path $root "assets\YBBvideozip.ico"
 $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 
 if (!(Test-Path -LiteralPath $src)) {
@@ -22,6 +23,14 @@ if (!(Test-Path -LiteralPath $csc)) {
     throw "Cannot find .NET Framework csc.exe."
 }
 
+if (!(Test-Path -LiteralPath $icon)) {
+    & (Join-Path $root "scripts\generate-icon.ps1")
+}
+
+if (!(Test-Path -LiteralPath $icon)) {
+    throw "Missing icon file: $icon"
+}
+
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 
 & $csc `
@@ -29,6 +38,7 @@ New-Item -ItemType Directory -Force -Path $dist | Out-Null
     /target:winexe `
     /optimize+ `
     /platform:anycpu `
+    "/win32icon:$icon" `
     /out:$exe `
     /reference:System.Windows.Forms.dll `
     /reference:System.Drawing.dll `
@@ -41,4 +51,3 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "Built: $exe"
-
