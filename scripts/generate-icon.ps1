@@ -24,7 +24,7 @@ function New-IconBitmap([int]$size) {
     $graphics = [System.Drawing.Graphics]::FromImage($bmp)
     $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
     $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
-    $graphics.Clear([System.Drawing.Color]::White)
+    $graphics.Clear([System.Drawing.Color]::Transparent)
 
     $scale = $size / 512.0
     $matrix = New-Object System.Drawing.Drawing2D.Matrix
