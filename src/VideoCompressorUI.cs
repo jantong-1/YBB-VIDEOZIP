@@ -101,7 +101,11 @@ namespace VideoCompressorUI
         private readonly RoundedButton outputDirButton;
         private readonly Label statusLabel;
         private readonly RoundedButton executeButton;
+        private readonly Label titleLabel;
+        private readonly RoundedButton proButton;
+        private readonly AdDisplayPanel adPanel;
 
+        private const string AppVersion = "1.0.0";
         private string ffmpegPath;
         private string ffprobePath;
         private string ffmpegVersionLine;
@@ -110,6 +114,12 @@ namespace VideoCompressorUI
         private bool toolsReady;
         private bool isRunning;
         private bool queueFinished;
+        private bool queueWorkFinished;
+        private bool adGateActive;
+        private int pendingFailures;
+        private AdConfig adConfig = AdConfigManager.CreateDefaultConfig();
+        private AdItem currentAd;
+        private bool proActivated;
         private CodecChoice selectedCodec = CodecChoice.H264;
         private EngineChoice selectedEngine = EngineChoice.Cpu;
         private QualityChoice selectedQuality = QualityChoice.Balanced;
@@ -118,8 +128,8 @@ namespace VideoCompressorUI
         {
             Text = "YBB视频压缩";
             StartPosition = FormStartPosition.CenterScreen;
-            ClientSize = new Size(910, 615);
-            MinimumSize = new Size(820, 560);
+            ClientSize = new Size(910, 700);
+            MinimumSize = new Size(820, 640);
             BackColor = Color.White;
             Font = new Font("Microsoft YaHei UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
             ShowIcon = false;
@@ -135,6 +145,31 @@ namespace VideoCompressorUI
                 BackColor = Color.White
             };
             Controls.Add(mainPanel);
+
+            proActivated = LicenseManager.IsProActivated();
+
+            titleLabel = new Label
+            {
+                AutoSize = false,
+                Text = "YBB视频压缩",
+                ForeColor = Color.FromArgb(35, 35, 35),
+                BackColor = Color.Transparent,
+                Font = new Font("Microsoft YaHei UI", 18F, FontStyle.Bold, GraphicsUnit.Point),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            mainPanel.Controls.Add(titleLabel);
+
+            proButton = new RoundedButton
+            {
+                Size = new Size(132, 40),
+                Radius = 12,
+                BorderWidth = 2,
+                BackColor = Color.FromArgb(55, 55, 55),
+                ForeColor = Color.White,
+                Font = new Font("Microsoft YaHei UI", 11F, FontStyle.Regular, GraphicsUnit.Point),
+                Cursor = Cursors.Hand
+            };
+            mainPanel.Controls.Add(proButton);
 
             dropPanel = new DashedPanel
             {
@@ -188,6 +223,9 @@ namespace VideoCompressorUI
             jobGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "进度", FillWeight = 12 });
             jobGrid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "输出位置", FillWeight = 40 });
             dropPanel.Controls.Add(jobGrid);
+
+            adPanel = new AdDisplayPanel();
+            dropPanel.Controls.Add(adPanel);
 
             h264Button = CreateOptionButton("H.264", new Point(34, 470), new Size(120, 48));
             h265Button = CreateOptionButton("H.265", new Point(166, 470), new Size(120, 48));
@@ -248,6 +286,10 @@ namespace VideoCompressorUI
             qualityCombo.SelectedIndexChanged += delegate { SelectQualityFromCombo(); };
             outputDirButton.Click += OutputDirButtonClick;
             executeButton.Click += ExecuteButtonClick;
+            proButton.Click += ProButtonClick;
+            adPanel.CloseRequested += delegate { HideCurrentAd(); };
+            adPanel.AdClicked += delegate { OpenCurrentAdClick(); };
+            adPanel.MinimumPlayReached += delegate { AdMinimumPlayReached(); };
 
             DragEnter += FilesDragEnter;
             DragDrop += FilesDragDrop;
@@ -261,7 +303,9 @@ namespace VideoCompressorUI
             Resize += delegate { LayoutControls(); };
             LayoutControls();
             RefreshOptionButtons();
+            UpdateProButton();
             Task.Run(new Action(CheckToolsAtStartup));
+            Task.Run(new Action(LoadAdConfigAtStartup));
         }
 
         private RoundedButton CreateOptionButton(string text, Point location, Size size)
@@ -283,19 +327,38 @@ namespace VideoCompressorUI
         private void LayoutControls()
         {
             const int margin = 24;
-            const int bottomAreaHeight = 160;
+            const int frameHorizontalMargin = 20;
+            const int headerHeight = 52;
+            const int bottomAreaHeight = 150;
             int panelWidth = Math.Max(0, mainPanel.ClientSize.Width);
             int panelHeight = Math.Max(0, mainPanel.ClientSize.Height);
-            int dropHeight = Math.Max(280, panelHeight - margin - bottomAreaHeight);
+            int dropTop = margin + headerHeight;
+            int availableWidth = Math.Max(360, panelWidth - frameHorizontalMargin * 2);
+            int availableHeight = Math.Max(260, panelHeight - dropTop - bottomAreaHeight);
+            int dropWidth = availableWidth;
+            int dropHeight = dropWidth * 9 / 16;
+            if (dropHeight > availableHeight)
+            {
+                dropHeight = availableHeight;
+                dropWidth = Math.Max(360, dropHeight * 16 / 9);
+                if (dropWidth > availableWidth)
+                {
+                    dropWidth = availableWidth;
+                    dropHeight = dropWidth * 9 / 16;
+                }
+            }
 
-            dropPanel.Location = new Point(margin, margin);
-            dropPanel.Size = new Size(Math.Max(360, panelWidth - margin * 2), dropHeight);
+            titleLabel.Location = new Point(34, 14);
+            titleLabel.Size = new Size(Math.Max(220, panelWidth - 220), 42);
+            proButton.Location = new Point(Math.Max(650, panelWidth - 34 - proButton.Width), 16);
 
-            jobGrid.Location = new Point(28, 28);
-            jobGrid.Size = new Size(Math.Max(300, dropPanel.ClientSize.Width - 56), Math.Max(200, dropPanel.ClientSize.Height - 56));
+            dropPanel.Location = new Point(Math.Max(frameHorizontalMargin, (panelWidth - dropWidth) / 2), dropTop);
+            dropPanel.Size = new Size(dropWidth, Math.Max(220, dropHeight));
 
-            int controlY = dropPanel.Bottom + 30;
-            int secondRowY = controlY + 65;
+            LayoutDropContent();
+
+            int controlY = dropPanel.Bottom + 20;
+            int secondRowY = controlY + 64;
             h264Button.Location = new Point(34, controlY);
             h265Button.Location = new Point(166, controlY);
             cpuButton.Location = new Point(318, controlY);
@@ -306,6 +369,42 @@ namespace VideoCompressorUI
             outputDirButton.Location = new Point(318, secondRowY);
             statusLabel.Location = new Point(450, secondRowY);
             statusLabel.Size = new Size(Math.Max(120, executeButton.Left - statusLabel.Left - 26), 44);
+        }
+
+        private void LayoutDropContent()
+        {
+            const int gridPadding = 18;
+            const int adInset = 3;
+            bool showAd = adPanel.Visible && jobs.Count > 0;
+
+            jobGrid.Location = new Point(gridPadding, gridPadding);
+            jobGrid.Size = new Size(
+                Math.Max(300, dropPanel.ClientSize.Width - gridPadding * 2),
+                Math.Max(200, dropPanel.ClientSize.Height - gridPadding * 2));
+
+            if (showAd)
+            {
+                jobGrid.Visible = false;
+                hintLabel.Visible = false;
+                adPanel.Location = new Point(adInset, adInset);
+                adPanel.Size = new Size(
+                    Math.Max(300, dropPanel.ClientSize.Width - adInset * 2),
+                    Math.Max(200, dropPanel.ClientSize.Height - adInset * 2));
+                adPanel.BringToFront();
+            }
+            else
+            {
+                if (jobs.Count > 0)
+                {
+                    jobGrid.Visible = true;
+                    hintLabel.Visible = false;
+                }
+
+                adPanel.Location = new Point(adInset, adInset);
+                adPanel.Size = new Size(
+                    Math.Max(300, dropPanel.ClientSize.Width - adInset * 2),
+                    Math.Max(200, dropPanel.ClientSize.Height - adInset * 2));
+            }
         }
 
         private static string DefaultHintText()
@@ -321,6 +420,104 @@ namespace VideoCompressorUI
             }
 
             return "保存到：" + customOutputDirectory;
+        }
+
+        private void LoadAdConfigAtStartup()
+        {
+            AdConfig loaded = AdConfigManager.LoadRemoteOrDefault();
+            Ui(delegate
+            {
+                adConfig = loaded;
+            });
+        }
+
+        private void ProButtonClick(object sender, EventArgs e)
+        {
+            using (LicenseDialog dialog = new LicenseDialog(proActivated))
+            {
+                if (dialog.ShowDialog(this) == DialogResult.OK && dialog.LicenseActivated)
+                {
+                    proActivated = true;
+                    UpdateProButton();
+                    HideCurrentAd();
+                    statusLabel.Text = "Pro 已激活，后续压缩将不再展示广告。";
+                }
+            }
+        }
+
+        private void UpdateProButton()
+        {
+            proActivated = LicenseManager.IsProActivated();
+            proButton.Text = proActivated ? "Pro 已激活" : "升级 Pro";
+            proButton.BackColor = proActivated ? Color.FromArgb(40, 120, 70) : Color.FromArgb(55, 55, 55);
+            proButton.ForeColor = Color.White;
+        }
+
+        private void StartAdGate()
+        {
+            if (proActivated)
+            {
+                return;
+            }
+
+            currentAd = AdConfigManager.SelectAd(adConfig, "Windows", AppVersion, null);
+            if (currentAd == null)
+            {
+                return;
+            }
+
+            adGateActive = true;
+            try
+            {
+                adPanel.StartAd(currentAd);
+                LayoutDropContent();
+            }
+            catch
+            {
+                adGateActive = false;
+                currentAd = null;
+                adPanel.StopAd();
+                LayoutDropContent();
+                statusLabel.Text = "广告暂不可用，压缩继续。";
+            }
+        }
+
+        private void HideCurrentAd()
+        {
+            if (!adPanel.Visible)
+            {
+                return;
+            }
+
+            adPanel.StopAd();
+            adGateActive = false;
+            currentAd = null;
+            LayoutDropContent();
+            if (queueWorkFinished)
+            {
+                CompleteQueue(pendingFailures);
+            }
+        }
+
+        private void AdMinimumPlayReached()
+        {
+            if (queueWorkFinished && adPanel.Visible)
+            {
+                statusLabel.Text = "压缩已完成，可以关闭广告查看结果。";
+            }
+        }
+
+        private void OpenCurrentAdClick()
+        {
+            try
+            {
+                string url = AdConfigManager.BuildTrackedClickUrl(currentAd, AppVersion, "compress_waiting");
+                Process.Start(url);
+            }
+            catch
+            {
+                statusLabel.Text = "无法打开广告链接。";
+            }
         }
 
         private void OutputDirButtonClick(object sender, EventArgs e)
@@ -805,8 +1002,12 @@ namespace VideoCompressorUI
 
         private void StartQueue()
         {
+            UpdateProButton();
             isRunning = true;
             queueFinished = false;
+            queueWorkFinished = false;
+            pendingFailures = 0;
+            adGateActive = false;
             executeButton.Text = "执行中";
             executeButton.Enabled = false;
             h264Button.Enabled = false;
@@ -816,6 +1017,7 @@ namespace VideoCompressorUI
             qualityCombo.Enabled = false;
             outputDirButton.Enabled = false;
             SetHint("");
+            StartAdGate();
 
             Task.Run(new Action(RunQueue));
         }
@@ -845,19 +1047,36 @@ namespace VideoCompressorUI
 
             Ui(delegate
             {
-                isRunning = false;
-                queueFinished = true;
-                executeButton.Text = "完成";
-                executeButton.Enabled = true;
-                h264Button.Enabled = true;
-                h265Button.Enabled = true;
-                cpuButton.Enabled = true;
-                gpuButton.Enabled = true;
-                qualityCombo.Enabled = true;
-                outputDirButton.Enabled = true;
-                statusLabel.Text = failures == 0 ? "全部完成。点击“完成”清空列表。" : "任务结束，部分文件失败。点击“完成”清空列表。";
-                SetHint("");
+                queueWorkFinished = true;
+                pendingFailures = failures;
+                if (adGateActive && adPanel.Visible)
+                {
+                    statusLabel.Text = adPanel.MinimumElapsed ? "压缩已完成，可以关闭广告查看结果。" : "压缩已完成，广告倒计时结束后可关闭。";
+                    SetHint("");
+                    return;
+                }
+
+                CompleteQueue(failures);
             });
+        }
+
+        private void CompleteQueue(int failures)
+        {
+            isRunning = false;
+            queueFinished = true;
+            queueWorkFinished = false;
+            adGateActive = false;
+            pendingFailures = failures;
+            executeButton.Text = "完成";
+            executeButton.Enabled = true;
+            h264Button.Enabled = true;
+            h265Button.Enabled = true;
+            cpuButton.Enabled = true;
+            gpuButton.Enabled = true;
+            qualityCombo.Enabled = true;
+            outputDirButton.Enabled = true;
+            statusLabel.Text = failures == 0 ? "全部完成。点击“完成”清空列表。" : "任务结束，部分文件失败。点击“完成”清空列表。";
+            SetHint("");
         }
 
         private bool RunEncode(VideoJob job)
@@ -1163,6 +1382,7 @@ namespace VideoCompressorUI
             bool hasJobs = jobs.Count > 0;
             jobGrid.Visible = hasJobs;
             hintLabel.Visible = !hasJobs;
+            LayoutDropContent();
         }
 
         private void UpdateJobRow(VideoJob job)
@@ -1222,6 +1442,11 @@ namespace VideoCompressorUI
 
         private void ClearJobs()
         {
+            adPanel.StopAd();
+            adGateActive = false;
+            queueWorkFinished = false;
+            pendingFailures = 0;
+            currentAd = null;
             jobs.Clear();
             RefreshJobGrid();
             queueFinished = false;
@@ -1237,6 +1462,7 @@ namespace VideoCompressorUI
                 hintLabel.Visible = false;
                 jobGrid.Visible = true;
                 statusLabel.Text = text;
+                LayoutDropContent();
                 return;
             }
 
@@ -1244,12 +1470,14 @@ namespace VideoCompressorUI
             {
                 hintLabel.Visible = false;
                 jobGrid.Visible = true;
+                LayoutDropContent();
                 return;
             }
 
             hintLabel.Text = text;
             hintLabel.Visible = true;
             jobGrid.Visible = jobs.Count > 0 && String.IsNullOrEmpty(text);
+            LayoutDropContent();
         }
 
         private void Ui(Action action)
@@ -1566,13 +1794,62 @@ namespace VideoCompressorUI
                 e.Graphics.DrawPath(pen, path);
             }
 
-            TextRenderer.DrawText(
-                e.Graphics,
-                Text,
-                Font,
-                rect,
-                text,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+            Font fittedFont = CreateFittingFont(e.Graphics, Text, Font, rect.Size);
+            try
+            {
+                TextRenderer.DrawText(
+                    e.Graphics,
+                    Text,
+                    fittedFont ?? Font,
+                    rect,
+                    text,
+                    TextFormatFlags.HorizontalCenter |
+                    TextFormatFlags.VerticalCenter |
+                    TextFormatFlags.SingleLine |
+                    TextFormatFlags.NoPadding |
+                    TextFormatFlags.EndEllipsis);
+            }
+            finally
+            {
+                if (fittedFont != null)
+                {
+                    fittedFont.Dispose();
+                }
+            }
+        }
+
+        private static Font CreateFittingFont(Graphics graphics, string text, Font baseFont, Size bounds)
+        {
+            if (String.IsNullOrEmpty(text) || bounds.Width <= 0 || bounds.Height <= 0)
+            {
+                return null;
+            }
+
+            TextFormatFlags flags =
+                TextFormatFlags.HorizontalCenter |
+                TextFormatFlags.VerticalCenter |
+                TextFormatFlags.SingleLine |
+                TextFormatFlags.NoPadding;
+
+            Size measured = TextRenderer.MeasureText(graphics, text, baseFont, bounds, flags);
+            if (measured.Width <= bounds.Width && measured.Height <= bounds.Height)
+            {
+                return null;
+            }
+
+            for (float size = baseFont.SizeInPoints - 1F; size >= 9F; size -= 0.5F)
+            {
+                Font candidate = new Font(baseFont.FontFamily, size, baseFont.Style, GraphicsUnit.Point);
+                measured = TextRenderer.MeasureText(graphics, text, candidate, bounds, flags);
+                if (measured.Width <= bounds.Width && measured.Height <= bounds.Height)
+                {
+                    return candidate;
+                }
+
+                candidate.Dispose();
+            }
+
+            return new Font(baseFont.FontFamily, 9F, baseFont.Style, GraphicsUnit.Point);
         }
 
         private static GraphicsPath RoundedRectangle(Rectangle bounds, int radius)

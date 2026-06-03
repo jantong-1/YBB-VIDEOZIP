@@ -16,5 +16,9 @@ dist/YBBvideozip.exe
 .vs/
 .vscode/
 
+# Local signing keys. Never commit private license keys.
+secrets/
+*.private.xml
+
 # Keep release zip intentionally.
 !dist/YBBvideozip-green.zip

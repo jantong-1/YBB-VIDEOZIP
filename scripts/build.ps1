@@ -5,14 +5,15 @@ param(
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$src = Join-Path $root "src\VideoCompressorUI.cs"
+$srcDir = Join-Path $root "src"
+$sources = Get-ChildItem -LiteralPath $srcDir -Filter "*.cs" | Sort-Object FullName
 $dist = Join-Path $root "dist"
 $exe = Join-Path $dist "YBBvideozip.exe"
 $icon = Join-Path $root "assets\YBBvideozip.ico"
 $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 
-if (!(Test-Path -LiteralPath $src)) {
-    throw "Missing source file: $src"
+if ($sources.Count -eq 0) {
+    throw "No C# source files found in: $srcDir"
 }
 
 if (!(Test-Path -LiteralPath $csc)) {
@@ -37,14 +38,18 @@ New-Item -ItemType Directory -Force -Path $dist | Out-Null
     /nologo `
     /target:winexe `
     /optimize+ `
+    /codepage:65001 `
     /platform:anycpu `
     "/win32icon:$icon" `
     /out:$exe `
     /reference:System.Windows.Forms.dll `
     /reference:System.Drawing.dll `
+    /reference:System.Core.dll `
     /reference:System.IO.Compression.dll `
     /reference:System.IO.Compression.FileSystem.dll `
-    $src
+    /reference:Microsoft.CSharp.dll `
+    /reference:System.Web.Extensions.dll `
+    $sources.FullName
 
 if ($LASTEXITCODE -ne 0) {
     throw "Build failed."

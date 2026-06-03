@@ -1,0 +1,18 @@
+{
+  "ads": [
+    {
+      "id": "ybb-default-pro",
+      "title": "YBBvideozip Pro 去广告",
+      "videoUrl": "https://vaers.oss-cn-beijing.aliyuncs.com/YBBffmpegVideo/ShowReel2024_h264.mp4",
+      "coverUrl": "",
+      "clickUrl": "https://shenlouar.cn/YBBvideozipFFmpeg/pro.html",
+      "enabled": true,
+      "weight": 1,
+      "minPlaySeconds": 15,
+      "startAt": "",
+      "endAt": "",
+      "platform": "Windows",
+      "appVersion": "*"
+    }
+  ]
+}
