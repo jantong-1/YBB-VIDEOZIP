@@ -153,7 +153,7 @@ ffprobe -v error -show_entries format=format_name,duration -show_entries stream=
 例如：
 
 ```text
-https://example.com/page?ad_id=showreel-2024&app_version=1.0.0&platform=Windows&source=desktop_app&placement=compress_waiting
+https://example.com/page?ad_id=showreel-2024&app_version=1.1.0&platform=Windows&source=desktop_app&placement=compress_waiting
 ```
 
 你可以通过短链接后台、落地页统计、联盟后台或网站访问日志查看点击数据。

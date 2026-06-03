@@ -105,7 +105,7 @@ namespace VideoCompressorUI
         private readonly RoundedButton proButton;
         private readonly AdDisplayPanel adPanel;
 
-        private const string AppVersion = "1.0.0";
+        private const string AppVersion = "1.1.0";
         private string ffmpegPath;
         private string ffprobePath;
         private string ffmpegVersionLine;
