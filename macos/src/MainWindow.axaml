@@ -1,0 +1,255 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="YBBvideozip.Mac.MainWindow"
+        Title="YBB视频压缩"
+        Width="637"
+        Height="480"
+        MinWidth="637"
+        MinHeight="480"
+        CanResize="False"
+        Background="White">
+  <Canvas Width="637" Height="480">
+    <Button x:Name="ProButton"
+            Classes="YbbButton"
+            IsVisible="False"
+            Canvas.Left="0"
+            Canvas.Top="0"
+            Width="132"
+            Height="40"
+            Background="#373737"
+            Foreground="White"
+            FontSize="15"
+            Click="ProButton_Click" />
+
+    <Grid x:Name="DropArea"
+          Canvas.Left="17"
+          Canvas.Top="17"
+          Width="603"
+          Height="339.1875"
+          Background="Transparent"
+          ClipToBounds="True">
+      <Rectangle x:Name="DropFill"
+                 Fill="#DADADA"
+                 RadiusX="15"
+                 RadiusY="15" />
+
+      <TextBlock x:Name="HintText"
+                 Text="拖入视频文件，进行压缩。&#x0a;压缩完成后，文件将保存在源文件旁。"
+                 Foreground="#8C8C8C"
+                 FontSize="25"
+                 TextAlignment="Center"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center" />
+
+      <Grid x:Name="JobScroll"
+            IsVisible="False"
+            Margin="18"
+            RowDefinitions="32,*">
+        <Border Grid.Row="0" Background="#CDCDCD">
+          <Grid ColumnDefinitions="34*,14*,12*,40*" ColumnSpacing="10" Margin="8,0">
+            <TextBlock Text="文件" FontWeight="Bold" Foreground="#464646" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="状态" FontWeight="Bold" Foreground="#464646" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2" Text="进度" FontWeight="Bold" Foreground="#464646" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="3" Text="输出位置" FontWeight="Bold" Foreground="#464646" VerticalAlignment="Center" />
+          </Grid>
+        </Border>
+        <ScrollViewer Grid.Row="1">
+          <ItemsControl ItemsSource="{Binding Jobs}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border BorderBrush="#C8C8C8" BorderThickness="0,0,0,1" Padding="8">
+                  <Grid ColumnDefinitions="34*,14*,12*,40*" ColumnSpacing="10">
+                    <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="1" Text="{Binding Status}" VerticalAlignment="Center" />
+                    <ProgressBar Grid.Column="2"
+                                 Minimum="0"
+                                 Maximum="100"
+                                 Value="{Binding Progress}"
+                                 MinWidth="0"
+                                 Height="12"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Center"
+                                 ClipToBounds="True" />
+                    <TextBlock Grid.Column="3" Text="{Binding OutputPath}" Foreground="#555555" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Grid>
+
+      <Border x:Name="AdOverlay"
+              IsVisible="False"
+              Margin="0"
+              Background="Transparent"
+              CornerRadius="13"
+              ClipToBounds="True">
+        <Grid Background="Black"
+              ClipToBounds="True">
+          <ContentControl x:Name="AdWebHost"
+                          Margin="0"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch" />
+
+          <TextBlock x:Name="AdFallbackText"
+                     IsVisible="False"
+                     Text="广告视频暂不可用"
+                     Foreground="White"
+                     FontSize="18"
+                     HorizontalAlignment="Center"
+                     VerticalAlignment="Center" />
+        </Grid>
+      </Border>
+
+      <Rectangle x:Name="DropDashedBorder"
+                 Fill="Transparent"
+                 Stroke="#111111"
+                 StrokeThickness="2"
+                 StrokeDashArray="4,3"
+                 RadiusX="15"
+                 RadiusY="15"
+                 IsHitTestVisible="False" />
+    </Grid>
+
+    <Button x:Name="H264Button"
+            Classes="YbbButton"
+            Canvas.Left="24"
+            Canvas.Top="374"
+            Width="84"
+            Height="34"
+            Padding="0"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            BorderBrush="#111111"
+            BorderThickness="2"
+            CornerRadius="15"
+            FontSize="23"
+            Click="H264Button_Click">
+      <TextBlock Classes="ButtonLabel" Text="H.264" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Button>
+    <Button x:Name="H265Button"
+            Classes="YbbButton"
+            Canvas.Left="116"
+            Canvas.Top="374"
+            Width="84"
+            Height="34"
+            Padding="0"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            BorderBrush="#111111"
+            BorderThickness="2"
+            CornerRadius="15"
+            FontSize="23"
+            Click="H265Button_Click">
+      <TextBlock Classes="ButtonLabel" Text="H.265" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Button>
+    <Button x:Name="CpuButton"
+            Classes="YbbButton"
+            Canvas.Left="223"
+            Canvas.Top="374"
+            Width="84"
+            Height="34"
+            Padding="0"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            BorderBrush="#111111"
+            BorderThickness="2"
+            CornerRadius="15"
+            FontSize="23"
+            Click="CpuButton_Click">
+      <TextBlock Classes="ButtonLabel" Text="CPU" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Button>
+    <Button x:Name="GpuButton"
+            Classes="YbbButton"
+            Canvas.Left="315"
+            Canvas.Top="374"
+            Width="84"
+            Height="34"
+            Padding="0"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            BorderBrush="#111111"
+            BorderThickness="2"
+            CornerRadius="15"
+            FontSize="23"
+            Click="GpuButton_Click">
+      <TextBlock Classes="ButtonLabel" Text="GPU" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Button>
+
+    <ComboBox x:Name="QualityCombo"
+              Canvas.Left="24"
+              Canvas.Top="420"
+              Width="176"
+              Height="34"
+              SelectedIndex="1"
+              FontSize="16"
+              SelectionChanged="QualityCombo_SelectionChanged">
+      <ComboBoxItem Content="高质量" />
+      <ComboBoxItem Content="均衡" />
+      <ComboBoxItem Content="小体积" />
+    </ComboBox>
+
+    <Button x:Name="OutputDirButton"
+            Classes="YbbButton"
+            Canvas.Left="223"
+            Canvas.Top="420"
+            Width="84"
+            Height="34"
+            Padding="0"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            BorderBrush="#111111"
+            BorderThickness="2"
+            CornerRadius="15"
+            FontSize="14"
+            Click="OutputDirButton_Click">
+      <TextBlock Classes="ButtonLabel" Text="自定义保存" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" />
+    </Button>
+
+    <Border x:Name="StatusTextBox"
+            Canvas.Left="315"
+            Canvas.Top="420"
+            Width="179"
+            Height="34"
+            VerticalAlignment="Center">
+      <TextBlock x:Name="StatusText"
+                 Foreground="#787878"
+                 FontSize="15"
+                 VerticalAlignment="Center"
+                 TextTrimming="CharacterEllipsis" />
+    </Border>
+
+    <Button x:Name="ExecuteButton"
+            Classes="YbbButton"
+            Canvas.Left="512"
+            Canvas.Top="374"
+            Width="90"
+            Height="76"
+            Padding="0"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            BorderBrush="#111111"
+            BorderThickness="2"
+            CornerRadius="15"
+            Background="#D2D2D2"
+            Foreground="#3C3C3C"
+            Click="ExecuteButton_Click">
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="0">
+        <TextBlock x:Name="ExecuteTitleText"
+                   Classes="ButtonLabel ExecuteTitle"
+                   Text="执行"
+                   FontSize="30"
+                   TextAlignment="Center"
+                   HorizontalAlignment="Center" />
+        <TextBlock x:Name="ExecuteSubtitleText"
+                   Text="点击返回"
+                   IsVisible="False"
+                   FontSize="11"
+                   TextAlignment="Center"
+                   HorizontalAlignment="Center"
+                   Margin="0,-2,0,0" />
+      </StackPanel>
+    </Button>
+  </Canvas>
+</Window>

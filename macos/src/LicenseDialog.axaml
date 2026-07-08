@@ -1,0 +1,47 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="YBBvideozip.Mac.LicenseDialog"
+        Title="升级 Pro"
+        Width="430"
+        Height="250"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="White">
+  <Grid RowDefinitions="44,36,30,40,34,*" Margin="24,18,24,14">
+    <TextBlock Text="Pro 版：9.9 元永久去广告"
+               FontSize="20"
+               FontWeight="Bold"
+               Foreground="#232323"
+               VerticalAlignment="Center" />
+    <TextBlock Grid.Row="1"
+               Text="https://shenlouar.cn/YBBvideozipFFmpeg/pro.html"
+               Foreground="#235AAA"
+               Cursor="Hand"
+               PointerPressed="PurchaseLink_PointerPressed"
+               VerticalAlignment="Center" />
+    <TextBlock Grid.Row="2"
+               Text="输入授权码："
+               Foreground="#464646"
+               VerticalAlignment="Center" />
+    <TextBox x:Name="LicenseTextBox"
+             Grid.Row="3"
+             FontFamily="Consolas"
+             FontSize="15" />
+    <TextBlock x:Name="StatusText"
+               Grid.Row="4"
+               Foreground="#777777"
+               VerticalAlignment="Center" />
+    <StackPanel Grid.Row="5"
+                Orientation="Horizontal"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Spacing="8">
+      <Button Classes="YbbButton" MinWidth="92" Click="ActivateButton_Click">
+        <TextBlock Classes="ButtonLabel" Text="激活" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Button>
+      <Button Classes="YbbButton" MinWidth="80" Click="CloseButton_Click">
+        <TextBlock Classes="ButtonLabel" Text="关闭" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Button>
+    </StackPanel>
+  </Grid>
+</Window>

@@ -1,0 +1,20 @@
+{
+  "runtimes": [
+    {
+      "platform": "Windows",
+      "architecture": "x64",
+      "archiveName": "ffmpeg-runtime-win64-gpl-8.1.1-ybb.zip",
+      "url": "https://shenlouarwebsite.oss-cn-shanghai.aliyuncs.com/YBBvideozipFFmpeg/ffmpeg-runtime-win64-gpl-8.1.1-ybb.zip",
+      "sha256": "457a01bdb3b98c16af8aa210adcda9b1fd3fc0ad09d0d3c299c436d1bbe713ab",
+      "rootDirectory": "ffmpeg"
+    },
+    {
+      "platform": "macOS",
+      "architecture": "arm64",
+      "archiveName": "ffmpeg-runtime-macos-arm64-gpl-8.1.2-ybb.zip",
+      "url": "https://shenlouarwebsite.oss-cn-shanghai.aliyuncs.com/YBBvideozipFFmpeg/ffmpeg-runtime-macos-arm64-gpl-8.1.2-ybb.zip",
+      "sha256": "e9e5e4010150ab4a51aa4e75175dda27b5e3a3072327ea12fed98ef3d60c3bd1",
+      "rootDirectory": "ffmpeg"
+    }
+  ]
+}

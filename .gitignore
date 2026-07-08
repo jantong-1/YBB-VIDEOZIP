@@ -2,15 +2,26 @@
 bin/
 obj/
 release-stage/
+macos/dist/
 *.user
 *.suo
 *.pdb
+.DS_Store
+
+# Local SDK/runtime caches
+tools/
+
+# Local handoff archives
+macos/handoff/
 
 # Runtime files downloaded on user machines
 ffmpeg/
+win64/ffmpeg/
+macos/ffmpeg/
 
 # Generated executable. It is kept inside the release zip instead.
 dist/YBBvideozip.exe
+win64/dist/YBBvideozip.exe
 
 # Local editor files
 .vs/
@@ -20,5 +31,10 @@ dist/YBBvideozip.exe
 secrets/
 *.private.xml
 
+# OSS runtime binaries are uploaded to OSS or GitHub Releases, not tracked in git.
+oss/**/*.zip
+oss/**/*.tar.gz
+
 # Keep release zip intentionally.
 !dist/YBBvideozip-green.zip
+!win64/dist/YBBvideozip-green.zip

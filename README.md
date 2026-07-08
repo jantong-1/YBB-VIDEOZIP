@@ -1,56 +1,45 @@
 # YBBvideozip
 
-Windows 绿色版视频压缩工具。
+视频压缩工具项目按平台隔离维护。
 
-## 功能
-
-- 拖入视频批量压缩
-- H.264 / H.265
-- CPU / NVIDIA GPU
-- 高质量 / 均衡 / 小体积
-- 默认输出到源文件旁，可自定义目录
-- 首次运行自动安装 FFmpeg 组件（约 70MB）
-
-## 支持格式
-
-- 输入：`.mp4` `.mov` `.mkv` `.avi` `.webm` `.m4v`
-- 输出：`.mp4`
-
-## 下载
-
-- [dist/YBBvideozip-green.zip](dist/YBBvideozip-green.zip)
-
-解压后运行：
+## 目录
 
 ```text
-YBBvideozip/
-  YBBvideozip.exe
+win64/    Windows 10/11 64 位版本，基于 .NET Framework 4.x + WinForms
+macos/    macOS Apple Silicon arm64 版本，基于 .NET 8 + Avalonia
+oss/      远程资源留存区，包含 Pro 页面、广告配置和 FFmpeg runtime 清单示例
+docs/     跨平台目录结构和 macOS 本地测试文档
 ```
 
-## 系统要求
+## 当前策略
 
-- Windows 10/11 64 位
-- .NET Framework 4.x
-- 首次运行需要联网下载 FFmpeg 组件
+- Windows 和 macOS 不使用 shared 目录。
+- 两个平台需要的源码、脚本、资源各放一份。
+- 广告配置和 Pro 页面保持一套远程资源。
+- FFmpeg runtime 按平台和架构拆分，放 OSS 后由各客户端按平台下载。
+- Windows 和 macOS 发布包在 GitHub Releases 中并行提供。
+- 当前 macOS 发布包只覆盖 Apple Silicon arm64；Intel Mac 版本后续再补。
 
-不支持 32 位 Windows。
+## 常用命令
 
-## 构建
+Windows 版：
 
 ```powershell
+cd .\win64
+powershell -ExecutionPolicy Bypass -File .\scripts\test.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
 ```
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\package-app.ps1
+macOS 版在 M4 MBP 上测试：
+
+```bash
+cd macos
+chmod +x scripts/*.sh
+scripts/test-macos-local.sh
 ```
 
-## FFmpeg
+macOS 正式签名、公证和打包：
 
-本软件调用 FFmpeg 命令行程序。FFmpeg 组件首次运行时自动下载并校验 SHA256。
-
-第三方组件说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-
-## 许可证
-
-GPL-3.0，见 [LICENSE](LICENSE)。
+```bash
+macos/scripts/sign-notarize-app.sh
+```
